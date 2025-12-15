@@ -53,3 +53,24 @@
 .badge-tier-b { background-color: #17a2b8; }
 .badge-tier-c { background-color: #ffc107; color: #000; }
 .badge-tier-d { background-color: #dc3545; }
+
+/* Filtered Select Multiple Horizontal Scrolling */
+.selector .selector-available select,
+.selector .selector-chosen select {
+    overflow-x: auto !important; /* Force horizontal scrollbar */
+}
+
+.selector .selector-available option,
+.selector .selector-chosen option {
+    white-space: nowrap !important; /* Prevent text wrapping */
+    padding-right: 10px; /* Add some padding for better readability */
+}
+
+/* Ensure the container allows expanding */
+.selector {
+    width: 100%;
+}
+
+.selector-available, .selector-chosen {
+    width: 45%; /* Adjust width to fit side by side comfortably */
+}
