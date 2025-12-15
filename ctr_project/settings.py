@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -121,3 +122,40 @@ STATIC_URL = "static/"
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
+
+JAZZMIN_SETTINGS = {
+    "site_title": "SOC Council Admin",
+    "site_header": "SOC Council Administration",
+    "site_brand": "SOC Council",
+    "welcome_sign": "Welcome to SOC Council Admin",
+    "copyright": "School of Computing Council",
+    "search_model": ["core.Club", "core.Event"],
+
+    # Top Menu
+    "topmenu_links": [
+        {"name": "Dashboard", "url": "dashboard", "permissions": ["auth.view_user"]},
+    ],
+
+    # Side Menu
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "order_with_respect_to": ["core", "auth"],
+
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "core.Club": "fas fa-users",
+        "core.Event": "fas fa-calendar-alt",
+        "core.Semester": "fas fa-clock",
+        "core.Ranking": "fas fa-trophy",
+        "core.AuditLog": "fas fa-history",
+    },
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar": "navbar-dark navbar-primary",
+    "theme": "flatly",
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_child_hide_on_collapse": True,
+}
