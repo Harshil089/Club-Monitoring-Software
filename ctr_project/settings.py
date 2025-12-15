@@ -131,6 +131,8 @@ JAZZMIN_SETTINGS = {
     "copyright": "School of Computing Council",
     "search_model": ["core.Club", "core.Event"],
 
+    "show_ui_builder": True,
+
     # Top Menu
     "topmenu_links": [
         {"name": "Dashboard", "url": "dashboard", "permissions": ["auth.view_user"]},
