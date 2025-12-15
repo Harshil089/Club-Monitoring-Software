@@ -134,7 +134,11 @@ JAZZMIN_SETTINGS = {
     # Top Menu
     "topmenu_links": [
         {"name": "Dashboard", "url": "dashboard", "permissions": ["auth.view_user"]},
+        {"name": "Users", "model": "auth.User", "permissions": ["auth.view_user"]},
+        {"name": "Groups", "model": "auth.Group", "permissions": ["auth.view_group"]},
     ],
+
+    "custom_css": "core/css/custom_admin.css",
 
     # Side Menu
     "show_sidebar": True,
