@@ -136,7 +136,7 @@ JAZZMIN_SETTINGS = {
     "copyright": "School of Computing Council",
     "search_model": ["core.Club", "core.Event"],
 
-    "show_ui_builder": True,
+    "show_ui_builder": False,
 
     # Top Menu
     "topmenu_links": [
@@ -146,6 +146,7 @@ JAZZMIN_SETTINGS = {
     ],
 
     "custom_css": "core/css/custom_admin.css",
+    "custom_js": "core/js/admin_theme_toggle.js",
 
     # Side Menu
     "show_sidebar": True,
