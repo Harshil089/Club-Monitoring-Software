@@ -36,7 +36,8 @@ class DashboardView(LoginRequiredMixin, ListView):
         context['semesters'] = Semester.objects.all()
         selected_semester_id = self.request.GET.get('semester')
         if selected_semester_id:
-            context['selected_semester'] = Semester.objects.get(id=selected_semester_id)
+            # Use filter().first() to avoid 500 error if ID is invalid
+            context['selected_semester'] = Semester.objects.filter(id=selected_semester_id).first()
         elif Semester.objects.filter(is_active=True).exists():
             context['selected_semester'] = Semester.objects.filter(is_active=True).first()
         else:
