@@ -8,4 +8,5 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('club/<int:pk>/', views.ClubDetailView.as_view(), name='club_detail'),
     path('export/', views.export_rankings_csv, name='export_rankings'),
+    path('health/', views.health_check, name='health_check'),
 ]

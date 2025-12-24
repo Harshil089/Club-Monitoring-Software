@@ -6,6 +6,9 @@ from .models import Club, Ranking, Semester, Event
 import csv
 from django.http import HttpResponse
 
+def health_check(request):
+    return HttpResponse("OK", status=200)
+
 class DashboardView(LoginRequiredMixin, ListView):
     model = Ranking
     template_name = 'core/dashboard.html'

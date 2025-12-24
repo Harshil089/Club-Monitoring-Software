@@ -3,19 +3,25 @@ from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from .models import Event, Ranking, Club, Semester, AuditLog
 from .middleware import get_current_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_audit_log(instance, action, details):
-    user = get_current_user()
-    # If called from shell/test where no middleware, user might be None
-    # Just try to handle it gracefully
-    if user and not user.is_authenticated:
-        user = None
+    try:
+        user = get_current_user()
+        # If called from shell/test where no middleware, user might be None
+        # Just try to handle it gracefully
+        if user and not user.is_authenticated:
+            user = None
 
-    AuditLog.objects.create(
-        user=user,
-        action=action,
-        details=details
-    )
+        AuditLog.objects.create(
+            user=user,
+            action=action,
+            details=details
+        )
+    except Exception as e:
+        logger.error(f"Failed to create audit log: {e}", exc_info=True)
 
 def calculate_club_performance(club, semester):
     """
@@ -111,78 +117,96 @@ def update_semester_ranks(semester):
 
 @receiver(pre_save, sender=Event)
 def event_pre_save_handler(sender, instance, **kwargs):
-    if instance.pk:
-        try:
-            old_instance = Event.objects.get(pk=instance.pk)
-            # Store diff in instance for post_save to use
-            changes = []
-            for field in ['planning_score', 'execution_score', 'documentation_score', 'innovation_score', 'turnout_score', 'total_score']:
-                if field == 'total_score': continue
-                old_val = getattr(old_instance, field)
-                new_val = getattr(instance, field)
-                if old_val != new_val:
-                    changes.append(f"{field}: {old_val} -> {new_val}")
+    try:
+        if instance.pk:
+            try:
+                old_instance = Event.objects.get(pk=instance.pk)
+                # Store diff in instance for post_save to use
+                changes = []
+                for field in ['planning_score', 'execution_score', 'documentation_score', 'innovation_score', 'turnout_score', 'total_score']:
+                    if field == 'total_score': continue
+                    old_val = getattr(old_instance, field)
+                    new_val = getattr(instance, field)
+                    if old_val != new_val:
+                        changes.append(f"{field}: {old_val} -> {new_val}")
 
-            if changes:
-                instance._audit_changes = "; ".join(changes)
-        except Event.DoesNotExist:
-            pass
+                if changes:
+                    instance._audit_changes = "; ".join(changes)
+            except Event.DoesNotExist:
+                pass
+    except Exception as e:
+        logger.error(f"Error in event_pre_save_handler: {e}", exc_info=True)
 
 @receiver(post_save, sender=Event)
 def event_save_handler(sender, instance, created, **kwargs):
-    action = "Event Added" if created else "Event Updated"
-    details = f"Event: {instance.name} ({instance.club.short_code}). Score: {instance.total_score}"
+    try:
+        action = "Event Added" if created else "Event Updated"
+        details = f"Event: {instance.name} ({instance.club.short_code}). Score: {instance.total_score}"
 
-    if not created and hasattr(instance, '_audit_changes'):
-        details += f". Changes: {instance._audit_changes}"
+        if not created and hasattr(instance, '_audit_changes'):
+            details += f". Changes: {instance._audit_changes}"
 
-    create_audit_log(instance, action, details)
+        create_audit_log(instance, action, details)
 
-    event_update_handler(instance)
+        event_update_handler(instance)
+    except Exception as e:
+        logger.error(f"Error in event_save_handler: {e}", exc_info=True)
 
 @receiver(post_delete, sender=Event)
 def event_delete_handler(sender, instance, **kwargs):
-    action = "Event Deleted"
-    details = f"Event: {instance.name} ({instance.club.short_code})"
-    create_audit_log(instance, action, details)
+    try:
+        action = "Event Deleted"
+        details = f"Event: {instance.name} ({instance.club.short_code})"
+        create_audit_log(instance, action, details)
 
-    event_update_handler(instance)
+        event_update_handler(instance)
+    except Exception as e:
+        logger.error(f"Error in event_delete_handler: {e}", exc_info=True)
 
 def event_update_handler(instance):
-    club = instance.club
-    semester = instance.semester
+    try:
+        club = instance.club
+        semester = instance.semester
 
-    # 1. Recalculate CPS/Tier for this club
-    calculate_club_performance(club, semester)
+        # 1. Recalculate CPS/Tier for this club
+        calculate_club_performance(club, semester)
 
-    # 2. Update Ranks for the whole semester
-    update_semester_ranks(semester)
+        # 2. Update Ranks for the whole semester
+        update_semester_ranks(semester)
+    except Exception as e:
+        logger.error(f"Error recalculating ranking for event {instance}: {e}", exc_info=True)
 
 @receiver(pre_save, sender=Club)
 def club_pre_save_handler(sender, instance, **kwargs):
-    if instance.pk:
-        try:
-            old_instance = Club.objects.get(pk=instance.pk)
-            changes = []
-            for field in ['name', 'short_code', 'faculty_incharge', 'student_lead']:
-                old_val = getattr(old_instance, field)
-                new_val = getattr(instance, field)
-                if old_val != new_val:
-                    changes.append(f"{field}: {old_val} -> {new_val}")
-            if changes:
-                instance._audit_changes = "; ".join(changes)
-        except Club.DoesNotExist:
-            pass
+    try:
+        if instance.pk:
+            try:
+                old_instance = Club.objects.get(pk=instance.pk)
+                changes = []
+                for field in ['name', 'short_code', 'faculty_incharge', 'student_lead']:
+                    old_val = getattr(old_instance, field)
+                    new_val = getattr(instance, field)
+                    if old_val != new_val:
+                        changes.append(f"{field}: {old_val} -> {new_val}")
+                if changes:
+                    instance._audit_changes = "; ".join(changes)
+            except Club.DoesNotExist:
+                pass
+    except Exception as e:
+        logger.error(f"Error in club_pre_save_handler: {e}", exc_info=True)
 
 @receiver(post_save, sender=Club)
 def club_save_handler(sender, instance, created, **kwargs):
-    if created:
-        action = "Club Added"
-        details = f"Club: {instance.name}"
-    else:
-        action = "Club Updated"
-        details = f"Club: {instance.name} details updated."
-        if hasattr(instance, '_audit_changes'):
-            details += f" Changes: {instance._audit_changes}"
+    try:
+        if created:
+            action = "Club Added"
+            details = f"Club: {instance.name}"
+        else:
+            action = "Club Updated"
+            details = f"Club: {instance.name} details updated."
+            if hasattr(instance, '_audit_changes'):
+                details += f" Changes: {instance._audit_changes}"
 
-    create_audit_log(instance, action, details)
+        create_audit_log(instance, action, details)
+    except Exception as e:
+        logger.error(f"Error in club_save_handler: {e}", exc_info=True)
