@@ -1,0 +1,7 @@
+Django>=5.0
+pytest-django
+django-jazzmin
+gunicorn
+psycopg2-binary
+dj-database-url
+whitenoise
